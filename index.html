@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>The Kawaii Spatial Diorama 3D from Tooplate</title>
+<meta name="description" content="A tiny isometric room built from pure Three.js primitives. Walk Mochi the bunny around, tap glowing objects to open each section. Get it from Tooplate website.">
+<!--
+  GM 635: The Kawaii Spatial Diorama
+  HTML/CSS/Vanilla JS template. 3D engine: Three.js r170, bundled locally in js/vendor.
+  Every 3D object is procedurally built from primitives. No model files.
+  Design: https://www.tooplate.com/view/2171-spatial-diorama
+-->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:ital,wght@0,500;0,700;0,800;0,900;1,900&family=Quicksand:wght@500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body data-mode="room">
+
+<div id="stage" aria-hidden="true"></div>
+
+<div class="loader" id="loader" role="status" aria-live="polite">
+  <span class="loader__bun" aria-hidden="true"></span>
+  <span id="loaderText">Fluffing up the room</span>
+</div>
+
+<header class="hud-top">
+  <div class="brand">
+    <span class="brand__mark" aria-hidden="true">
+      <svg viewBox="0 0 32 32" fill="none"><ellipse cx="11" cy="8" rx="3.2" ry="7" fill="#fff" stroke="#1F1B24" stroke-width="1.6"/><ellipse cx="21" cy="8" rx="3.2" ry="7" fill="#fff" stroke="#1F1B24" stroke-width="1.6"/><circle cx="16" cy="20" r="9.5" fill="#fff" stroke="#1F1B24" stroke-width="1.6"/><circle cx="12.5" cy="19" r="1.4" fill="#1F1B24"/><circle cx="19.5" cy="19" r="1.4" fill="#1F1B24"/><ellipse cx="10" cy="22.5" rx="1.8" ry="1.1" fill="#FFD1DC"/><ellipse cx="22" cy="22.5" rx="1.8" ry="1.1" fill="#FFD1DC"/></svg>
+    </span>
+    <span class="brand__txt"><b>GM 635</b><span>Kawaii Spatial Diorama</span></span>
+  </div>
+  <div class="hud-actions">
+    <button class="icon-btn" id="soundBtn" type="button" aria-pressed="true" aria-label="Sound">
+      <svg class="ico-on" viewBox="0 0 24 24" fill="none" stroke="#1F1B24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3l5-4v13l-5-4H4z"/><path d="M16 9a4 4 0 0 1 0 6"/><path d="M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg>
+      <svg class="ico-off" viewBox="0 0 24 24" fill="none" stroke="#1F1B24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9.5h3l5-4v13l-5-4H4z"/><path d="M16.5 9.5l5 5M21.5 9.5l-5 5"/></svg>
+    </button>
+    <button class="icon-btn" id="resetBtn" type="button" aria-label="Reset the room view">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#1F1B24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg>
+    </button>
+  </div>
+</header>
+
+<div id="hotspots">
+  <button class="hotspot is-hidden" type="button" data-open="hero" data-hotspot="hero"><span class="hotspot__key">1</span><span class="hotspot__txt">Glowing TV</span><span class="hotspot__near" aria-hidden="true"><kbd>Space</kbd><i>Tap Mochi</i> to open</span></button>
+  <button class="hotspot is-hidden" type="button" data-open="gallery" data-hotspot="gallery"><span class="hotspot__key">2</span><span class="hotspot__txt">Floating frame</span><span class="hotspot__near" aria-hidden="true"><kbd>Space</kbd><i>Tap Mochi</i> to open</span></button>
+  <button class="hotspot is-hidden" type="button" data-open="cabinet" data-hotspot="cabinet"><span class="hotspot__key">3</span><span class="hotspot__txt">Cabinet</span><span class="hotspot__near" aria-hidden="true"><kbd>Space</kbd><i>Tap Mochi</i> to open</span></button>
+  <button class="hotspot is-hidden" type="button" data-open="mail" data-hotspot="mail"><span class="hotspot__key">4</span><span class="hotspot__txt">Mochi mailbox</span><span class="hotspot__near" aria-hidden="true"><kbd>Space</kbd><i>Tap Mochi</i> to open</span></button>
+</div>
+
+<nav class="dock" aria-label="Room objects">
+  <button class="dock__btn" type="button" data-open="hero"><span class="dock__ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#1F1B24" stroke-width="2" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="4"/><path d="M8 3l4 4 4-4" stroke-linecap="round"/></svg></span>TV<kbd>1</kbd></button>
+  <button class="dock__btn" type="button" data-open="gallery"><span class="dock__ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#1F1B24" stroke-width="2" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 16l5-5 4 4 3-3 6 6" stroke-linecap="round"/></svg></span>Frame<kbd>2</kbd></button>
+  <button class="dock__btn" type="button" data-open="cabinet"><span class="dock__ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#1F1B24" stroke-width="2" stroke-linejoin="round"><rect x="4" y="3" width="16" height="18" rx="3"/><path d="M4 9h16M4 15h16" /><circle cx="12" cy="6" r=".6" fill="#1F1B24"/><circle cx="12" cy="12" r=".6" fill="#1F1B24"/><circle cx="12" cy="18" r=".6" fill="#1F1B24"/></svg></span>Cabinet<kbd>3</kbd></button>
+  <button class="dock__btn" type="button" data-open="mail"><span class="dock__ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="#1F1B24" stroke-width="2" stroke-linejoin="round"><path d="M5 11a5 5 0 0 1 10 0v7H5z"/><path d="M15 6h2a3 3 0 0 1 3 3v9h-5M10 18v3"/><path d="M17 11V4h3" stroke-linecap="round"/></svg></span>Mailbox<kbd>4</kbd></button>
+</nav>
+
+<p class="hint" id="hint"><b>Tap the floor</b> to walk Mochi. <b>Space</b> jumps, and a jump beside an object opens it. Drag to look around, arrows or WASD steer.</p>
+<a class="credit" href="https://www.tooplate.com" target="_blank" rel="nofollow noopener">Design: Tooplate</a>
+
+<button id="backBtn" type="button"><span class="bb-ico" aria-hidden="true"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1F1B24" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></span>Back to Room <kbd>Esc</kbd></button>
+
+<main>
+  <!-- 01 HERO: revealed from inside the TV screen -->
+  <section class="panel glass" id="panel-hero" aria-labelledby="hero-title" inert>
+    <div data-stagger>
+      <p class="eyebrow">Channel 01 · Now glowing</p>
+      <h1 class="hero-title panel__head" id="hero-title" tabindex="-1">Tiny room, <span class="puff">big</span> <em>feelings.</em></h1>
+      <p class="hero-lede">Mochi Room Studio builds pocket-sized interactive spaces. This one is ours: every object is a doorway, and Mochi the bunny is happy to walk you between them.</p>
+      <ul class="hero-facts">
+        <li><i></i>4 objects to open</li>
+        <li style="--f:var(--blush)"><i></i>Built from spheres and boxes</li>
+        <li style="--f:var(--lavender)"><i></i>Every step plays a note</li>
+      </ul>
+      <div class="hero-cta">
+        <button class="btn btn--ink" type="button" data-go="gallery">See the rooms
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+        <button class="btn btn--soft" type="button" data-go="mail">Write to Mochi</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 02 GALLERY: horizontal slider over the rippling WebGL frame -->
+  <section class="panel" id="panel-gallery" aria-labelledby="gal-title" inert>
+    <div class="gal-head glass" style="--ey:var(--lav-ink);--ey-dot:var(--lavender)">
+      <div>
+        <p class="eyebrow">Frame 02 · Past commissions</p>
+        <h2 class="panel__head" id="gal-title" tabindex="-1">Rooms we have built</h2>
+        <p>Hover a room to ripple it into the frame. Drag the row or use the arrows.</p>
+      </div>
+      <div class="gal-ctrl">
+        <button class="icon-btn" type="button" id="galPrev" aria-label="Previous room"><svg viewBox="0 0 24 24" fill="none" stroke="#1F1B24" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+        <span class="gal-count" id="galCount" aria-live="polite">1 / 6</span>
+        <button class="icon-btn" type="button" id="galNext" aria-label="Next room"><svg viewBox="0 0 24 24" fill="none" stroke="#1F1B24" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+      </div>
+    </div>
+    <ul class="track" id="track">
+      <li class="card" tabindex="0" aria-label="Pudding Pavilion, café diorama"><figure>
+        <img src="images/gm635-pudding.jpg" alt="Soft-lit café interior used as the reference for Pudding Pavilion" width="600" height="750" draggable="false">
+        <span class="card__tag">Café</span>
+        <figcaption><b>Pudding Pavilion</b><span>12 objects · 3 walk nodes</span></figcaption></figure></li>
+      <li class="card" tabindex="0" aria-label="Cloud Nap Loft, bedroom diorama"><figure>
+        <img src="images/gm635-cloudnap.jpg" alt="Airy bedroom reference for Cloud Nap Loft" width="600" height="750" draggable="false">
+        <span class="card__tag" style="background:var(--lavender)">Bedroom</span>
+        <figcaption><b>Cloud Nap Loft</b><span>9 objects · rain sound</span></figcaption></figure></li>
+      <li class="card" tabindex="0" aria-label="Mint Tea Arcade, game room diorama"><figure>
+        <img src="images/gm635-minttea.jpg" alt="Colorful game room reference for Mint Tea Arcade" width="600" height="750" draggable="false">
+        <span class="card__tag" style="background:var(--blush)">Arcade</span>
+        <figcaption><b>Mint Tea Arcade</b><span>16 objects · 2 guides</span></figcaption></figure></li>
+      <li class="card" tabindex="0" aria-label="Lavender Reading Nook, library diorama"><figure>
+        <img src="images/gm635-nook.jpg" alt="Quiet reading corner reference for Lavender Reading Nook" width="600" height="750" draggable="false">
+        <span class="card__tag">Library</span>
+        <figcaption><b>Lavender Reading Nook</b><span>7 objects · page-turn audio</span></figcaption></figure></li>
+      <li class="card" tabindex="0" aria-label="Peach Soda Kiosk, shop diorama"><figure>
+        <img src="images/gm635-kiosk.jpg" alt="Street kiosk reference for Peach Soda Kiosk" width="600" height="750" draggable="false">
+        <span class="card__tag" style="background:var(--blush)">Shop</span>
+        <figcaption><b>Peach Soda Kiosk</b><span>10 objects · checkout flow</span></figcaption></figure></li>
+      <li class="card" tabindex="0" aria-label="Starlight Attic, studio diorama"><figure>
+        <img src="images/gm635-attic.jpg" alt="Attic studio reference for Starlight Attic" width="600" height="750" draggable="false">
+        <span class="card__tag" style="background:var(--lavender)">Studio</span>
+        <figcaption><b>Starlight Attic</b><span>14 objects · night mode</span></figcaption></figure></li>
+    </ul>
+  </section>
+
+  <!-- 03 CABINET: spring drawers, synced with the 3D drawers -->
+  <section class="panel glass" id="panel-cabinet" aria-labelledby="cab-title" inert>
+    <div data-stagger>
+      <p class="eyebrow">Cabinet 03 · What is inside</p>
+      <h2 class="panel__head" id="cab-title" tabindex="-1">Everything tucked in the drawers</h2>
+      <p>Open a drawer here and the matching one slides out of the cabinet in the room.</p>
+      <ul class="drawers" id="drawers">
+        <li class="drawer">
+          <button class="drawer__btn" type="button" aria-expanded="false" aria-controls="dw-0" id="dwb-0" data-drawer="0"><span class="drawer__knob" aria-hidden="true"></span>Made from shapes<span class="drawer__meta">Top drawer</span></button>
+          <div class="drawer__body" id="dw-0" role="region" aria-labelledby="dwb-0"><div class="drawer__inner"><div class="drawer__pop">
+            <p>Every chair, cloud and ear is sculpted from spheres, boxes and capsules when the page loads. There are no model files to download, so the room appears almost instantly.</p>
+            <ul><li>No GLTF or OBJ</li><li>Rounded boxes</li><li>Soft shadows</li></ul>
+          </div></div></div>
+        </li>
+        <li class="drawer">
+          <button class="drawer__btn" type="button" aria-expanded="false" aria-controls="dw-1" id="dwb-1" data-drawer="1"><span class="drawer__knob" aria-hidden="true"></span>A bouncy walk<span class="drawer__meta">Second drawer</span></button>
+          <div class="drawer__body" id="dw-1" role="region" aria-labelledby="dwb-1"><div class="drawer__inner"><div class="drawer__pop">
+            <p>Mochi walks on a fixed 60 Hz spring stepper, so the waddle, the squash and the ear flop feel the same on a phone and on a 240 Hz monitor.</p>
+            <ul><li>Squash and stretch</li><li>Ear springs</li><li>Collision with furniture</li></ul>
+          </div></div></div>
+        </li>
+        <li class="drawer">
+          <button class="drawer__btn" type="button" aria-expanded="false" aria-controls="dw-2" id="dwb-2" data-drawer="2"><span class="drawer__knob" aria-hidden="true"></span>Marimba footsteps<span class="drawer__meta">Third drawer</span></button>
+          <div class="drawer__body" id="dw-2" role="region" aria-labelledby="dwb-2"><div class="drawer__inner"><div class="drawer__pop">
+            <p>Each footstep strikes a synthesized wooden bar tuned to a pentatonic scale, so any walk turns into a small tune. Opening an object rings a glass chime.</p>
+            <ul><li>Web Audio only</li><li>Pentatonic scale</li><li>Mute from the top bar</li></ul>
+          </div></div></div>
+        </li>
+        <li class="drawer">
+          <button class="drawer__btn" type="button" aria-expanded="false" aria-controls="dw-3" id="dwb-3" data-drawer="3"><span class="drawer__knob" aria-hidden="true"></span>A pastel light rig<span class="drawer__meta">Bottom drawer</span></button>
+          <div class="drawer__body" id="dw-3" role="region" aria-labelledby="dwb-3"><div class="drawer__inner"><div class="drawer__pop">
+            <p>A sky fill, one soft key light and the glow from the TV keep Blush, Mint and Lavender readable against a pure white page.</p>
+            <ul><li>Neutral tone mapping</li><li>Glowing TV</li><li>Floating shadow</li></ul>
+          </div></div></div>
+        </li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 04 FOOTER: the Mochi mailbox -->
+  <footer class="panel glass" id="panel-mail" aria-labelledby="mail-title" inert>
+    <div data-stagger>
+      <p class="eyebrow">Mailbox 04 · Say hello</p>
+      <h2 class="panel__head" id="mail-title" tabindex="-1">Pop a note in the mailbox</h2>
+      <p>Tell us about the room you have in mind. Mochi hops when a letter arrives.</p>
+      <div class="form-wrap" id="formWrap">
+        <form class="form" id="mailForm" novalidate action="#">
+          <div class="field">
+            <label for="f-name">Your name</label>
+            <input id="f-name" name="name" type="text" autocomplete="name" required aria-describedby="e-name">
+            <span class="err" id="e-name" aria-live="polite"></span>
+          </div>
+          <div class="field">
+            <label for="f-email">Email</label>
+            <input id="f-email" name="email" type="email" autocomplete="email" required aria-describedby="e-email">
+            <span class="err" id="e-email" aria-live="polite"></span>
+          </div>
+          <fieldset class="field">
+            <legend>This note is about</legend>
+            <div class="moods">
+              <label class="mood"><input type="radio" name="topic" value="room" checked><span>A new room</span></label>
+              <label class="mood"><input type="radio" name="topic" value="collab"><span>A collab</span></label>
+              <label class="mood"><input type="radio" name="topic" value="hello"><span>Just hello</span></label>
+            </div>
+          </fieldset>
+          <div class="field">
+            <label for="f-msg">Message</label>
+            <textarea id="f-msg" name="message" required aria-describedby="e-msg"></textarea>
+            <span class="err" id="e-msg" aria-live="polite"></span>
+          </div>
+          <div class="form-row">
+            <button class="btn btn--ink" type="submit">Send note
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12l16-8-6 16-3-7z"/></svg></button>
+            <span class="form-note">We reply within two days.</span>
+          </div>
+        </form>
+        <div class="sent" id="sent" role="status">
+          <div class="sent__heart" aria-hidden="true"><svg viewBox="0 0 24 24" fill="#1F1B24"><path d="M12 21s-7.5-4.6-9.3-9.2C1.4 8.4 3.6 5 7 5c2 0 3.5 1.1 5 3 1.5-1.9 3-3 5-3 3.4 0 5.6 3.4 4.3 6.8C19.5 16.4 12 21 12 21z"/></svg></div>
+          <h3>Note sent!</h3>
+          <p>Mochi is doing a happy hop. We will write back within two days.</p>
+          <div class="form-row" style="margin-top:16px"><button class="btn btn--soft" type="button" id="againBtn">Write another note</button></div>
+        </div>
+      </div>
+      <div class="mail-foot">
+        <span>© 2026 Mochi Room Studio</span>
+        <span>Design: <a href="https://www.tooplate.com" target="_blank" rel="nofollow noopener">Tooplate</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Unlisted: Mochi's secret sprout. No hotspot, no dock button, no hint. -->
+  <aside class="panel glass" id="panel-secret" aria-labelledby="secret-title" inert>
+    <div data-stagger>
+      <p class="eyebrow">Secret sprout</p>
+      <h2 class="panel__head" id="secret-title" tabindex="-1">Mochi's hidden sprout</h2>
+      <p>Every room we build hides one small surprise. This one is a sprout that only wakes up when someone hops beside it.</p>
+      <div class="sprout-grow">
+        <ul class="sprout-meter" aria-hidden="true">
+          <li></li><li></li><li></li><span id="sproutCount">0 of 3 drops</span>
+        </ul>
+        <div class="form-row">
+          <button class="btn btn--ink" type="button" id="waterBtn">Water the sprout
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3s6 6.6 6 11a6 6 0 0 1-12 0c0-4.4 6-11 6-11z"/></svg></button>
+          <span class="form-note" id="sproutNote" aria-live="polite">It needs three drops.</span>
+        </div>
+      </div>
+      <div class="sprout-done" role="status">
+        <div class="petal-row" aria-hidden="true">
+          <i style="--c:#FFC3D3;--r:0"></i><i style="--c:#FFE27A;--r:20"></i><i style="--c:#B4E8BD;--r:40"></i><i style="--c:#DEDAFB;--r:60"></i><i style="--c:#9FD8FF;--r:80"></i>
+        </div>
+        <h3 style="font-weight:900;font-size:24px;letter-spacing:-.02em;margin:8px 0 6px">It bloomed!</h3>
+        <p>Mochi will look after it from here. Keep this one between us.</p>
+      </div>
+    </div>
+  </aside>
+</main>
+
+
+<!-- Three.js r170 subset (MIT), bundled locally so the template works offline -->
+<script src="js/vendor/three-diorama.min.js"></script>
+<!-- UI layer: panels, audio, forms. Works on its own if the 3D engine cannot load. -->
+<script src="js/app.js"></script>
+<!-- Diorama engine: Three.js scene, bunny, raycasting, camera flights -->
+<script src="js/diorama.js"></script>
+</body>
+</html>
